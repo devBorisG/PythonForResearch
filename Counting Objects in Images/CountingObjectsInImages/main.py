@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 from pdfrw import PdfWriter, PageMerge, PdfDict, PdfName
+from PIL import Image
 
 
 # Function to save the image
@@ -37,25 +38,6 @@ def generate_pdf():
     # Create a new PDF writer
     writer = PdfWriter()
 
-    # Add code to PDF
-    with open(__file__, 'r') as code_file:
-        code = code_file.read()
-        code_page = PageMerge().add(PdfDict(
-            Type=PdfName.Page,
-            MediaBox=[0, 0, 612, 792],
-            Contents=PdfDict(stream=code),
-            Resources=PdfDict(
-                Font=PdfDict(
-                    F1=PdfDict(
-                        Type=PdfName.Font,
-                        Subtype=PdfName.Type1,
-                        BaseFont=PdfName.Helvetica
-                    )
-                )
-            )
-        )).render()
-        writer.addpage(code_page)
-
     # Add images to PDF
     images = [
         'monedas_colombia.jpg',
@@ -67,27 +49,40 @@ def generate_pdf():
         'monedas_colombia_coins.jpg',
         'monedas_colombia_coins_count.jpg'
     ]
+
+    # Loop through images
     for image in images:
-        img_page = PageMerge().add(PdfDict(
-            Type=PdfName.Page,
-            MediaBox=[0, 0, 612, 792],
-            Contents=PdfDict(stream=f'<</Type /XObject /Subtype /Image /Width 612 /Height 792 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(open(f"assets/images/{image}", "rb").read())}>> stream\n{open(f"assets/images/{image}", "rb").read()}\nendstream'),
-            Resources=PdfDict(
-                XObject=PdfDict(
-                    Im0=PdfDict(
-                        Type=PdfName.XObject,
-                        Subtype=PdfName.Image,
-                        Width=612,
-                        Height=792,
-                        ColorSpace=PdfName.DeviceRGB,
-                        BitsPerComponent=8,
-                        Filter=PdfName.DCTDecode,
-                        Length=len(open(f'assets/images/{image}', 'rb').read())
+        try:
+            # Open the image
+            image_path = f"assets/images/{image}"
+            img = Image.open(image_path)
+            img_width, img_height = img.size
+
+            # Create a new blank page
+            pdf_page = PageMerge().add(PdfDict(
+                Type=PdfName.Page,
+                MediaBox=[0, 0, img_width, img_height],
+                Contents=PdfDict(stream=''),
+                Resources=PdfDict(
+                    XObject=PdfDict(
+                        Im0=PdfDict(
+                            Type=PdfName.XObject,
+                            Subtype=PdfName.Image,
+                            Width=img_width,
+                            Height=img_height,
+                            ColorSpace=PdfName.DeviceRGB,
+                            BitsPerComponent=8,
+                            Filter=PdfName.DCTDecode,
+                            Length=len(open(image_path, 'rb').read())
+                        )
                     )
                 )
-            )
-        )).render()
-        writer.addpage(img_page)
+            )).render()
+
+            # Add the page to the PDF writer
+            writer.addpage(pdf_page)
+        except Exception as e:
+            print(f"Error processing image: {image} - {e}")
 
     # Save the PDF
     writer.write('assets/report/monedas_colombia_report.pdf')
