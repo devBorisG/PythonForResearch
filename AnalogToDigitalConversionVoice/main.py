@@ -1,10 +1,3 @@
-# TODO: 1. Grabar un ejemplo de nota de voz
-# TODO: 2. Filtrar los intervalos de silencio
-# TODO: 3. Muestreo, cuantificación y codificación
-# TODO: 4. Transformacion de Fourier
-# TODO: 5. Visualizar el Histograma de frecuencias
-# TODO: 6. Analizar y Reporte de resultados
-
 # Importar librerias
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,6 +5,7 @@ import soundfile as sf
 from scipy.signal import resample
 import sounddevice as sd
 from numpy.fft import fft, fftfreq
+import parselmouth
 
 
 # ------------------------DEFINICION DE FUNCIONES-----------------------------------------------------------------------
@@ -24,6 +18,7 @@ def plot_signal(data, title, xlabel, ylabel, color):
     ax.set_ylabel(ylabel)
     plt.show()
     fig.savefig('./assets/results/' + title + '.png')
+    plt.close(fig)
 
 
 # Función para detectar y filtrar intervalos de silencio
@@ -35,7 +30,8 @@ def filter_silence(audio_data, samplerate, silence_threshold=0.01, min_silence_d
     if len(audio_data.shape) > 1:
         filtered_channels = []
         for channel in range(audio_data.shape[1]):
-            filtered_channel = filter_silence(audio_data[:, channel], samplerate, silence_threshold, min_silence_duration)
+            filtered_channel = filter_silence(audio_data[:, channel], samplerate, silence_threshold,
+                                              min_silence_duration)
             filtered_channels.append(filtered_channel)
         return np.stack(filtered_channels, axis=-1)
 
@@ -102,7 +98,7 @@ def plot_encoded_data(encoded_data, num_bits=100):
     bit_string = encoded_data[:num_bits]
 
     # Split the bit string into groups of 8 bits
-    bytes_list = [bit_string[i:i+8] for i in range(0, len(bit_string), 8)]
+    bytes_list = [bit_string[i:i + 8] for i in range(0, len(bit_string), 8)]
 
     # Convert each byte to its decimal representation for plotting
     decimal_values = [int(byte, 2) for byte in bytes_list]
@@ -115,6 +111,7 @@ def plot_encoded_data(encoded_data, num_bits=100):
     ax.set_title('First 100 Bits of Encoded Data (Grouped by Byte)')
     plt.show()
     fig.savefig('./assets/results/encoded_data.png')
+    plt.close(fig)
 
 
 # Función para aplicar la Transformada de Fourier y graficar el espectro de frecuencias
@@ -138,13 +135,14 @@ def plot_fourier_transform(audio_data, samplerate):
     ax.set_xlim([min(xf), max(xf)])
     plt.show()
     fig.savefig('./assets/results/frequency_spectrum.png')
+    plt.close(fig)
 
     # Retornar los valores transformados y las frecuencias correspondientes
     return xf, yf
 
 
 # Función para graficar el histograma del espectro de frecuencias
-def plot_frequency_histogram(frequencies, transformed_values, num_bins=50):
+def plot_frequency_histogram(frequencies, transformed_values, num_bins=150):
     # Calcular la magnitud de los valores transformados
     magnitudes = np.abs(transformed_values)
 
@@ -154,19 +152,218 @@ def plot_frequency_histogram(frequencies, transformed_values, num_bins=50):
     positive_magnitudes = magnitudes[mask]
 
     # Crear el histograma: distribuye las frecuencias en diferentes intervalos de magnitud
-    plt.figure(figsize=(10, 4))
-    plt.hist(positive_frequencies, bins=num_bins, weights=positive_magnitudes, color='blue', edgecolor='black')
-    plt.title('Histograma del Espectro de Frecuencias')
-    plt.xlabel('Frecuencia (Hz)')
-    plt.ylabel('Amplitud')
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.hist(positive_frequencies, bins=num_bins, weights=positive_magnitudes, color='blue', edgecolor='black')
+    ax.set_title('Histograma del Espectro de Frecuencias')
+    ax.set_xlabel('Frecuencia (Hz)')
+    ax.set_ylabel('Amplitud')
+    ax.grid(True)
+    plt.show()
+    fig.savefig('./assets/results/frequency_histogram.png')
+    plt.close(fig)
+
+
+# Funcion para identificar la frecuencia normal y el rango de frecuencia de la voz grabada
+def identify_normal_frequency(frequencies, transformed_values):
+    # Calcular la magnitud de los valores transformados
+    magnitudes = np.abs(transformed_values)
+
+    # Filtrar las frecuencias positivas
+    mask = frequencies >= 0
+    positive_frequencies = frequencies[mask]
+    positive_magnitudes = magnitudes[mask]
+
+    # Calcular la frecuencia normal
+    normal_frequency = positive_frequencies[np.argmax(positive_magnitudes)]
+    print('Frecuencia normal:', normal_frequency, 'Hz')
+
+    # Calcular el rango de frecuencias
+    min_frequency = positive_frequencies[np.argmin(positive_magnitudes)]
+    max_frequency = positive_frequencies[np.argmax(positive_magnitudes)]
+    print('Rango de frecuencias:', min_frequency, 'Hz -', max_frequency, 'Hz')
+
+    return normal_frequency, min_frequency, max_frequency
+
+
+# Funcion para graficar las frecuencias dominantes
+def plot_dominant_frequencies(audio_data, samplerate, num_frequencies=5):
+    # Aplicar la Transformada de Fourier
+    N = len(audio_data)
+    yf = fft(audio_data)
+    xf = fftfreq(N, 1 / samplerate)
+
+    # Solo usar las frecuencias positivas
+    xf = xf[:N // 2]
+    yf = np.abs(yf[:N // 2])
+
+    # Identificar las frecuencias más predominantes
+    indices = np.argsort(yf)[-num_frequencies:]
+    dominant_frequencies = xf[indices]
+    dominant_amplitudes = yf[indices]
+
+    # Graficar las frecuencias predominantes
+    fig, ax = plt.subplots()
+    ax.bar(dominant_frequencies, dominant_amplitudes, color='red')
+    ax.set_title('Frecuencias Más Predominantes')
+    ax.set_xlabel('Frecuencia (Hz)')
+    ax.set_ylabel('Amplitud')
+    plt.show()
+    fig.savefig('./assets/results/dominant_frequencies.png')
+    plt.close(fig)
+
+
+# Función para detectar formantes
+def detect_formants(audio_data, samplerate):
+    pre_emphasis = 0.97
+    emphasized_signal = np.append(audio_data[0], audio_data[1:] - pre_emphasis * audio_data[:-1])
+    frame_size = 0.025
+    frame_stride = 0.01
+    frame_length, frame_step = frame_size * samplerate, frame_stride * samplerate
+    signal_length = len(emphasized_signal)
+    frame_length = int(round(frame_length))
+    frame_step = int(round(frame_step))
+    num_frames = int(np.ceil(float(np.abs(signal_length - frame_length)) / frame_step))
+    pad_signal_length = num_frames * frame_step + frame_length
+    z = np.zeros((pad_signal_length - signal_length))
+    pad_signal = np.append(emphasized_signal, z)
+    indices = np.tile(np.arange(0, frame_length), (num_frames, 1)) + np.tile(np.arange(0, num_frames * frame_step, frame_step), (frame_length, 1)).T
+    frames = pad_signal[indices.astype(np.int32, copy=False)]
+    frames *= np.hamming(frame_length)
+    NFFT = 512
+    mag_frames = np.absolute(np.fft.rfft(frames, NFFT))
+    pow_frames = ((1.0 / NFFT) * ((mag_frames) ** 2))
+    nfilt = 40
+    low_freq_mel = 0
+    high_freq_mel = (2595 * np.log10(1 + (samplerate / 2) / 700))
+    mel_points = np.linspace(low_freq_mel, high_freq_mel, nfilt + 2)
+    hz_points = (700 * (10**(mel_points / 2595) - 1))
+    bin = np.floor((NFFT + 1) * hz_points / samplerate)
+    fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
+    for m in range(1, nfilt + 1):
+        f_m_minus = int(bin[m - 1])
+        f_m = int(bin[m])
+        f_m_plus = int(bin[m + 1])
+        for k in range(f_m_minus, f_m):
+            fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
+        for k in range(f_m, f_m_plus):
+            fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
+    filter_banks = np.dot(pow_frames, fbank.T)
+    filter_banks = np.where(filter_banks == 0, np.finfo(float).eps, filter_banks)
+    filter_banks = 20 * np.log10(filter_banks)
+    return filter_banks
+
+
+# Funcion para detectar vocales
+def detect_vowels(audio_data, samplerate):
+    # Convertir el audio a un objeto Sound de parselmouth
+    sound = parselmouth.Sound(audio_data, samplerate)
+
+    # Obtener los formantes utilizando parselmouth
+    formant = sound.to_formant_burg()
+
+    # Inicializar una lista para almacenar las vocales detectadas
+    vowels = []
+
+    # Iterar sobre cada frame para obtener los formantes
+    for t in np.arange(0, sound.duration, 0.01):
+        f1 = formant.get_value_at_time(1, t)
+        f2 = formant.get_value_at_time(2, t)
+
+        # Filtrar los formantes para identificar vocales
+        if f1 and f2:
+            if 300 < f1 < 900 and 850 < f2 < 2500:
+                vowels.append((f1, f2))
+
+    return np.array(vowels)
+
+# Función para identificar la vocal basada en los formantes
+vowel_formants_range = {
+    'a': {'F1': (600, 900), 'F2': (850, 1500)},
+    'e': {'F1': (400, 700), 'F2': (1650, 2500)},
+    'i': {'F1': (200, 450), 'F2': (1700, 2500)},
+    'o': {'F1': (400, 700), 'F2': (700, 1200)},
+    'u': {'F1': (250, 450), 'F2': (600, 1100)}
+}
+def identify_vowel(f1, f2, vowel_formants=vowel_formants_range):
+    for vowel, formants in vowel_formants.items():
+        if formants['F1'][0] <= f1 <= formants['F1'][1] and formants['F2'][0] <= f2 <= formants['F2'][1]:
+            return vowel
+    return 'Unknown'
+
+# Función para calcular la energía
+def calculate_energy(audio_data, frame_size, frame_stride, samplerate):
+    frame_length, frame_step = frame_size * samplerate, frame_stride * samplerate
+    signal_length = len(audio_data)
+    frame_length = int(round(frame_length))
+    frame_step = int(round(frame_step))
+    num_frames = int(np.ceil(float(np.abs(signal_length - frame_length)) / frame_step))
+    pad_signal_length = num_frames * frame_step + frame_length
+    z = np.zeros((pad_signal_length - signal_length))
+    pad_signal = np.append(audio_data, z)
+    indices = np.tile(np.arange(0, frame_length), (num_frames, 1)) + np.tile(np.arange(0, num_frames * frame_step, frame_step), (frame_length, 1)).T
+    frames = pad_signal[indices.astype(np.int32, copy=False)]
+    energy = np.sum(frames ** 2, axis=1)
+    return energy
+
+
+# Función para analizar el pitch
+def analyze_pitch(audio_data, samplerate):
+    sound = parselmouth.Sound(audio_data, samplerate)
+    pitch = sound.to_pitch()
+    pitch_values = pitch.selected_array['frequency']
+    pitch_values[pitch_values == 0] = np.nan  # Replace unvoiced parts with NaN
+    return pitch_values
+
+
+def plot_formants(formants, title='Formantes'):
+    plt.figure(figsize=(10, 6))
+    for i, formant in enumerate(formants.T[:2]):
+        plt.plot(formant, label=f'Formante {i+1}')
+    plt.title(title)
+    plt.xlabel('Tiempo (frames)')
+    plt.ylabel('Frecuencia (Hz)')
+    plt.legend()
     plt.grid(True)
     plt.show()
+    plt.savefig('./assets/results/formants.png')
+    plt.close()
+
+
+def plot_energy(energy, title='Energía de la Señal'):
+    plt.figure(figsize=(10, 6))
+    plt.plot(energy, color='blue')
+    plt.title(title)
+    plt.xlabel('Tiempo (frames)')
+    plt.ylabel('Energía')
+    plt.grid(True)
+    plt.show()
+    plt.savefig('./assets/results/energy.png')
+    plt.close()
+
+
+def plot_pitch(pitch_values, title='Pitch de la Señal'):
+    plt.figure(figsize=(10, 6))
+    plt.plot(pitch_values, color='red')
+    plt.title(title)
+    plt.xlabel('Tiempo (frames)')
+    plt.ylabel('Frecuencia (Hz)')
+    plt.grid(True)
+    plt.show()
+    plt.savefig('./assets/results/pitch.png')
+    plt.close()
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 # ------------------------CODIGO PRINCIPAL------------------------------------------------------------------------------
 # 1. Leer la nota de voz en formato WAV
-data, samplerate = sf.read('./assets/test.wav')
+data, samplerate = sf.read('assets/records/test4.wav')
+
+# Si el audio tiene múltiples canales, promediar los canales
+if len(data.shape) > 1:
+    data = np.mean(data, axis=1)
+
+# Ahora `data` es un array unidimensional
 
 # 2. Reproducir la nota de voz original
 #sd.play(data, samplerate)
@@ -175,7 +372,7 @@ data, samplerate = sf.read('./assets/test.wav')
 # 3. Graficar la nota de voz original
 plot_signal(data, 'Nota de voz original', 'Tiempo', 'Amplitud', 'green')
 
-# 3. Filtrar los intervalos de silecio
+# 3. Filtrar los intervalos de silencio
 filtered_data = filter_silence(data, samplerate)
 
 # 4. Reproducir la nota de voz filtrada
@@ -189,7 +386,8 @@ plot_signal(filtered_data, 'Nota de voz filtrada quitando silencio', 'Tiempo', '
 # 6.1. Number of quantization levels
 num_levels = 256
 
-new_samplerate = 16000  # New sample rate in Hz
+new_samplerate = 4000  # New sample rate in Hz (e.g., 4000 Hz), to resample the audio data to a lower rate for
+# Nyquist theorem
 resampled_data = resample_audio(filtered_data, samplerate, new_samplerate)
 
 # 6.2. Quantize the resampled audio data
@@ -208,4 +406,27 @@ frequencies, transformed_values = plot_fourier_transform(resampled_data, new_sam
 # 9. Visualizing the Frequency Histogram
 plot_frequency_histogram(frequencies, transformed_values)
 
-#Identifying the normal frequency and frequency range of the recorded voice
+# Identifying the normal frequency and frequency range of the recorded voice
+identify_normal_frequency(frequencies, transformed_values)
+
+# 10. Plotting the Dominant Frequencies
+plot_dominant_frequencies(resampled_data, new_samplerate)
+
+# Detectar formantes
+formants = detect_formants(filtered_data, samplerate)
+plot_formants(formants)
+
+# Vocales
+vowels = detect_vowels(filtered_data, samplerate)
+identify_vowels = [identify_vowel(f1, f2) for f1, f2 in vowels]
+print("Vocales identificadas:", identify_vowels)
+
+# Calcular la energía
+frame_size = 0.025
+frame_stride = 0.01
+energy = calculate_energy(filtered_data, frame_size, frame_stride, samplerate)
+plot_energy(energy)
+
+# Analizar el pitch
+pitch_values = analyze_pitch(filtered_data, samplerate)
+plot_pitch(pitch_values)
