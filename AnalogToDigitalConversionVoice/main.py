@@ -11,6 +11,19 @@ import parselmouth
 # ------------------------DEFINICION DE FUNCIONES-----------------------------------------------------------------------
 # Funcion para realizar graficos con matplotlib
 def plot_signal(data, title, xlabel, ylabel, color):
+    """
+    Grafica una señal de audio utilizando matplotlib.
+
+    Args:
+        data (numpy.ndarray): Datos de la señal de audio.
+        title (str): Título del gráfico.
+        xlabel (str): Etiqueta del eje X.
+        ylabel (str): Etiqueta del eje Y.
+        color (str): Color de la línea del gráfico.
+
+    Returns:
+        None
+    """
     fig, ax = plt.subplots()
     ax.plot(data, color=color)
     ax.set_title(title)
@@ -23,6 +36,19 @@ def plot_signal(data, title, xlabel, ylabel, color):
 
 # Función para detectar y filtrar intervalos de silencio
 def filter_silence(audio_data, samplerate, silence_threshold=0.01, min_silence_duration=0.5):
+    """
+    Grafica una señal de audio utilizando matplotlib.
+
+    Args:
+        data (numpy.ndarray): Datos de la señal de audio.
+        title (str): Título del gráfico.
+        xlabel (str): Etiqueta del eje X.
+        ylabel (str): Etiqueta del eje Y.
+        color (str): Color de la línea del gráfico.
+
+    Returns:
+        None
+    """
     # Convertir la duración mínima de silencio a muestras
     min_silence_samples = int(min_silence_duration * samplerate)
 
@@ -61,6 +87,17 @@ def filter_silence(audio_data, samplerate, silence_threshold=0.01, min_silence_d
 
 # Funcion para realizar el re muestreo
 def resample_audio(audio_data, original_samplerate, new_samplerate):
+    """
+    Realiza el remuestreo de una señal de audio a una nueva frecuencia de muestreo.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        original_samplerate (int): Frecuencia de muestreo original.
+        new_samplerate (int): Nueva frecuencia de muestreo.
+
+    Returns:
+        numpy.ndarray: Datos de la señal de audio remuestreados.
+    """
     # Calculate the number of samples in the resampled audio
     num_samples = int(len(audio_data) * new_samplerate / original_samplerate)
 
@@ -72,6 +109,16 @@ def resample_audio(audio_data, original_samplerate, new_samplerate):
 
 # Función para realizar la cuantificación
 def quantize(audio_data, num_levels):
+    """
+    Realiza la cuantificación de una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        num_levels (int): Número de niveles de cuantificación.
+
+    Returns:
+        numpy.ndarray: Datos de la señal de audio cuantificados.
+    """
     # Normalize the audio data to the range [-1, 1]
     audio_data_normalized = 2 * (audio_data - np.min(audio_data)) / (np.max(audio_data) - np.min(audio_data)) - 1
 
@@ -83,6 +130,15 @@ def quantize(audio_data, num_levels):
 
 # Función para realizar la codificación
 def encode(quantized_data):
+    """
+    Codifica los datos cuantificados en un formato digital (binario).
+
+    Args:
+        quantized_data (numpy.ndarray): Datos de la señal de audio cuantificados.
+
+    Returns:
+        str: Datos codificados en formato binario.
+    """
     # Ensure quantized_data is a 1D array
     quantized_data = np.asarray(quantized_data).flatten()
 
@@ -94,6 +150,16 @@ def encode(quantized_data):
 
 # Función para graficar los primeros 100 bits de los datos codificados
 def plot_encoded_data(encoded_data, num_bits=100):
+    """
+    Grafica los primeros bits de los datos codificados.
+
+    Args:
+        encoded_data (str): Datos codificados en formato binario.
+        num_bits (int): Número de bits a graficar.
+
+    Returns:
+        None
+    """
     # Get the first num_bits of the encoded data
     bit_string = encoded_data[:num_bits]
 
@@ -116,6 +182,16 @@ def plot_encoded_data(encoded_data, num_bits=100):
 
 # Función para aplicar la Transformada de Fourier y graficar el espectro de frecuencias
 def plot_fourier_transform(audio_data, samplerate):
+    """
+    Aplica la Transformada de Fourier y grafica el espectro de frecuencias.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+
+    Returns:
+        tuple: Frecuencias y valores transformados.
+    """
     # Aplicar la Transformada de Fourier
     N = len(audio_data)
     yf = fft(audio_data)
@@ -143,6 +219,17 @@ def plot_fourier_transform(audio_data, samplerate):
 
 # Función para graficar el histograma del espectro de frecuencias
 def plot_frequency_histogram(frequencies, transformed_values, num_bins=150):
+    """
+    Grafica el histograma del espectro de frecuencias.
+
+    Args:
+        frequencies (numpy.ndarray): Frecuencias obtenidas de la Transformada de Fourier.
+        transformed_values (numpy.ndarray): Valores transformados de la señal de audio.
+        num_bins (int): Número de bins para el histograma.
+
+    Returns:
+        None
+    """
     # Calcular la magnitud de los valores transformados
     magnitudes = np.abs(transformed_values)
 
@@ -165,6 +252,16 @@ def plot_frequency_histogram(frequencies, transformed_values, num_bins=150):
 
 # Funcion para identificar la frecuencia normal y el rango de frecuencia de la voz grabada
 def identify_normal_frequency(frequencies, transformed_values):
+    """
+    Identifica la frecuencia normal y el rango de frecuencia de la voz grabada.
+
+    Args:
+        frequencies (numpy.ndarray): Frecuencias obtenidas de la Transformada de Fourier.
+        transformed_values (numpy.ndarray): Valores transformados de la señal de audio.
+
+    Returns:
+        tuple: Frecuencia normal, frecuencia mínima y frecuencia máxima.
+    """
     # Calcular la magnitud de los valores transformados
     magnitudes = np.abs(transformed_values)
 
@@ -187,6 +284,17 @@ def identify_normal_frequency(frequencies, transformed_values):
 
 # Funcion para graficar las frecuencias dominantes
 def plot_dominant_frequencies(audio_data, samplerate, num_frequencies=5):
+    """
+    Grafica las frecuencias más predominantes en una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+        num_frequencies (int): Número de frecuencias predominantes a graficar.
+
+    Returns:
+        None
+    """
     # Aplicar la Transformada de Fourier
     N = len(audio_data)
     yf = fft(audio_data)
@@ -214,6 +322,16 @@ def plot_dominant_frequencies(audio_data, samplerate, num_frequencies=5):
 
 # Función para detectar formantes
 def detect_formants(audio_data, samplerate):
+    """
+    Detecta los formantes en una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+
+    Returns:
+        numpy.ndarray: Formantes detectados.
+    """
     pre_emphasis = 0.97
     emphasized_signal = np.append(audio_data[0], audio_data[1:] - pre_emphasis * audio_data[:-1])
     frame_size = 0.025
@@ -255,6 +373,16 @@ def detect_formants(audio_data, samplerate):
 
 # Funcion para detectar vocales
 def detect_vowels(audio_data, samplerate):
+    """
+    Detecta las vocales en una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+
+    Returns:
+        numpy.ndarray: Vocales detectadas.
+    """
     # Convertir el audio a un objeto Sound de parselmouth
     sound = parselmouth.Sound(audio_data, samplerate)
 
@@ -276,6 +404,7 @@ def detect_vowels(audio_data, samplerate):
 
     return np.array(vowels)
 
+
 # Función para identificar la vocal basada en los formantes
 vowel_formants_range = {
     'a': {'F1': (600, 900), 'F2': (850, 1500)},
@@ -284,14 +413,40 @@ vowel_formants_range = {
     'o': {'F1': (400, 700), 'F2': (700, 1200)},
     'u': {'F1': (250, 450), 'F2': (600, 1100)}
 }
+
+
 def identify_vowel(f1, f2, vowel_formants=vowel_formants_range):
+    """
+    Identifica la vocal basada en los formantes.
+
+    Args:
+        f1 (float): Primer formante.
+        f2 (float): Segundo formante.
+        vowel_formants (dict): Rango de formantes para cada vocal.
+
+    Returns:
+        str: Vocal identificada.
+    """
     for vowel, formants in vowel_formants.items():
         if formants['F1'][0] <= f1 <= formants['F1'][1] and formants['F2'][0] <= f2 <= formants['F2'][1]:
             return vowel
     return 'Unknown'
 
+
 # Función para calcular la energía
 def calculate_energy(audio_data, frame_size, frame_stride, samplerate):
+    """
+    Calcula la energía de una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        frame_size (float): Tamaño del frame en segundos.
+        frame_stride (float): Desplazamiento del frame en segundos.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+
+    Returns:
+        numpy.ndarray: Energía de la señal de audio.
+    """
     frame_length, frame_step = frame_size * samplerate, frame_stride * samplerate
     signal_length = len(audio_data)
     frame_length = int(round(frame_length))
@@ -308,6 +463,16 @@ def calculate_energy(audio_data, frame_size, frame_stride, samplerate):
 
 # Función para analizar el pitch
 def analyze_pitch(audio_data, samplerate):
+    """
+    Analiza el pitch de una señal de audio.
+
+    Args:
+        audio_data (numpy.ndarray): Datos de la señal de audio.
+        samplerate (int): Frecuencia de muestreo de la señal de audio.
+
+    Returns:
+        numpy.ndarray: Valores de pitch de la señal de audio.
+    """
     sound = parselmouth.Sound(audio_data, samplerate)
     pitch = sound.to_pitch()
     pitch_values = pitch.selected_array['frequency']
@@ -316,6 +481,16 @@ def analyze_pitch(audio_data, samplerate):
 
 
 def plot_formants(formants, title='Formantes'):
+    """
+    Grafica los formantes de una señal de audio.
+
+    Args:
+        formants (numpy.ndarray): Formantes detectados.
+        title (str): Título del gráfico.
+
+    Returns:
+        None
+    """
     plt.figure(figsize=(10, 6))
     for i, formant in enumerate(formants.T[:2]):
         plt.plot(formant, label=f'Formante {i+1}')
@@ -330,6 +505,16 @@ def plot_formants(formants, title='Formantes'):
 
 
 def plot_energy(energy, title='Energía de la Señal'):
+    """
+    Grafica la energía de una señal de audio.
+
+    Args:
+        energy (numpy.ndarray): Energía de la señal de audio.
+        title (str): Título del gráfico.
+
+    Returns:
+        None
+    """
     plt.figure(figsize=(10, 6))
     plt.plot(energy, color='blue')
     plt.title(title)
@@ -342,6 +527,16 @@ def plot_energy(energy, title='Energía de la Señal'):
 
 
 def plot_pitch(pitch_values, title='Pitch de la Señal'):
+    """
+    Grafica el pitch de una señal de audio.
+
+    Args:
+        pitch_values (numpy.ndarray): Valores de pitch de la señal de audio.
+        title (str): Título del gráfico.
+
+    Returns:
+        None
+    """
     plt.figure(figsize=(10, 6))
     plt.plot(pitch_values, color='red')
     plt.title(title)
