@@ -567,61 +567,61 @@ if len(data.shape) > 1:
 # 3. Graficar la nota de voz original
 plot_signal(data, 'Nota de voz original', 'Tiempo', 'Amplitud', 'green')
 
-# 3. Filtrar los intervalos de silencio
+# 4. Filtrar los intervalos de silencio
 filtered_data = filter_silence(data, samplerate)
 
-# 4. Reproducir la nota de voz filtrada
+# 5. Reproducir la nota de voz filtrada
 #sd.play(filtered_data, samplerate)
 #status = sd.wait()
 
-# 5. Graficar la nota de voz filtrada eliminando los intervalos de silencio
+# 6. Graficar la nota de voz filtrada eliminando los intervalos de silencio
 plot_signal(filtered_data, 'Nota de voz filtrada quitando silencio', 'Tiempo', 'Amplitud', 'blue')
 
-# 6. Sampling, Quantization, and Coding
-# 6.1. Number of quantization levels
+# 7. Sampling, Quantization, and Coding
+# 7.1. Number of quantization levels
 num_levels = 256
 
 new_samplerate = 4000  # New sample rate in Hz (e.g., 4000 Hz), to resample the audio data to a lower rate for
 # Nyquist theorem
 resampled_data = resample_audio(filtered_data, samplerate, new_samplerate)
 
-# 6.2. Quantize the resampled audio data
+# 7.2. Quantize the resampled audio data
 quantized_data = quantize(resampled_data, num_levels)
 
-# 6.3. Encode the quantized data
+# 7.3. Encode the quantized data
 encoded_data = encode(quantized_data)
 
-# 7. Print the first 100 bits of the encoded data as an example
+# 8. Print the first 100 bits of the encoded data as an example
 print(encoded_data[:100])
 plot_encoded_data(encoded_data)
 
-# 8. Fourier Transformation
+# 9. Fourier Transformation
 frequencies, transformed_values = plot_fourier_transform(resampled_data, new_samplerate)
 
-# 9. Visualizing the Frequency Histogram
+# 10. Visualizing the Frequency Histogram
 plot_frequency_histogram(frequencies, transformed_values)
 
-# Identifying the normal frequency and frequency range of the recorded voice
+# 11. Identifying the normal frequency and frequency range of the recorded voice
 identify_normal_frequency(frequencies, transformed_values)
 
-# 10. Plotting the Dominant Frequencies
+# 12. Plotting the Dominant Frequencies
 plot_dominant_frequencies(resampled_data, new_samplerate)
 
-# Detectar formantes
+# 13. Detectar formantes para el analisis de vocales
 formants = detect_formants(filtered_data, samplerate)
 plot_formants(formants)
 
-# Vocales
+# 14. Vocales analizadas en la nota de voz
 vowels = detect_vowels(filtered_data, samplerate)
 identify_vowels = [identify_vowel(f1, f2) for f1, f2 in vowels]
 print("Vocales identificadas:", identify_vowels)
 
-# Calcular la energía
+# 15. Calcular la energía de la señal
 frame_size = 0.025
 frame_stride = 0.01
 energy = calculate_energy(filtered_data, frame_size, frame_stride, samplerate)
 plot_energy(energy)
 
-# Analizar el pitch
+# 16. Analizar el pitch
 pitch_values = analyze_pitch(filtered_data, samplerate)
 plot_pitch(pitch_values)
