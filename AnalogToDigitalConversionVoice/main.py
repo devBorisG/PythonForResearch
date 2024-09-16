@@ -561,8 +561,8 @@ if len(data.shape) > 1:
 # Ahora `data` es un array unidimensional
 
 # 2. Reproducir la nota de voz original
-#sd.play(data, samplerate)
-#status = sd.wait()
+sd.play(data, samplerate)
+status = sd.wait()
 
 # 3. Graficar la nota de voz original
 plot_signal(data, 'Nota de voz original', 'Tiempo', 'Amplitud', 'green')
@@ -571,8 +571,8 @@ plot_signal(data, 'Nota de voz original', 'Tiempo', 'Amplitud', 'green')
 filtered_data = filter_silence(data, samplerate)
 
 # 5. Reproducir la nota de voz filtrada
-#sd.play(filtered_data, samplerate)
-#status = sd.wait()
+sd.play(filtered_data, samplerate)
+status = sd.wait()
 
 # 6. Graficar la nota de voz filtrada eliminando los intervalos de silencio
 plot_signal(filtered_data, 'Nota de voz filtrada quitando silencio', 'Tiempo', 'Amplitud', 'blue')

@@ -1,38 +1,50 @@
-import functions.image_processing as ip
-import functions.audio_processing as ap
+import librosa
+import librosa.display
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+import soundfile as sf
 
-# TODO: 1. Audio to Spectrogram Conversion:
-# 1.1.Convert the input audio file (e.g., WAV or MP3 format) into a spec-
-# trogram, which visually represents the frequency and amplitude of
-# the sound over time.
-# 1.2. Save the spectrogram as an image (e.g., PNG or JPG format).
+def audio_to_spectrogram(audio_path, output_image='spectrogram.png'):
+    audio, sr = librosa.load(audio_path)
+    S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=256, n_mels=256)
+    S_dB = librosa.power_to_db(S, ref=np.max)
+    plt.figure(figsize=(10, 4))
+    plt.axis('off')
+    librosa.display.specshow(S_dB, sr=sr, x_axis=None, y_axis=None)
+    plt.savefig(output_image, bbox_inches='tight', pad_inches=0)
+    plt.close()
+    return S, sr, S_dB
 
-# TODO: 2. Image Processing on the Spectrogram:
-# 2.1. Load the spectrogram image and apply image filtering or enhance-
-# ment techniques such as blurring, sharpening, edge detection, or noise, etc.
-# 2.2. Perform image segmentation or thresholding to alter specific parts of
-# the spectrogram.
+def process_spectrogram_image(input_image, output_image='modified_spectrogram.png'):
+    spectrogram_image = cv2.imread(input_image)
+    blurred_spectrogram = cv2.GaussianBlur(spectrogram_image, (5, 5), 0)
+    cv2.imwrite('blurred_spectrogram.png', blurred_spectrogram)
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened_spectrogram = cv2.filter2D(blurred_spectrogram, -1, kernel)
+    cv2.imwrite('sharpened_spectrogram.png', sharpened_spectrogram)
+    edges = cv2.Canny(sharpened_spectrogram, 100, 200)
+    cv2.imwrite('edges_spectrogram.png', edges)
+    cv2.imwrite(output_image, edges)
+    return edges
 
-# TODO: 3. Reconstruction of the Audio:
-# 3.1. After modifying the spectrogram image, reconstruct the audio file
-# from the modified image
-# 3.2. Save the reconstructed audio file (e.g., WAV or MP3 format).
+def image_to_spectrogram(image_path):
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    S = np.array(img, dtype=np.float32)
+    S = librosa.db_to_power(S)
+    return S
 
-# TODO: 4. Comparison:
-# 4.1. Compare the original and reconstructed audio to assess the impact
-# of the image processing on the sound quality.
+def spectrogram_to_audio(S, sr, output_audio='reconstructed_audio.wav'):
+    mel_spec = librosa.feature.inverse.mel_to_stft(S, sr=sr)
+    reconstructed_audio = librosa.griffinlim(mel_spec, n_iter=200, hop_length=512)
+    sf.write(output_audio, reconstructed_audio, sr)
 
-
-def main():
-    # 1. Convertir audio a espectrograma
-    S, sr = ap.audio_to_spectrogram('../AnalogToDigitalConversionVoice/assets/records/test4.wav', 'spectrogram.png')
-
-    # 2. Procesar la imagen del espectrograma
-    ip.process_spectrogram_image('spectrogram.png', 'modified_spectrogram.png')
-
-    # 3. Reconstruir audio desde el espectrograma modificado
-    ap.spectrogram_to_audio(S, sr, 'reconstructed_audio.wav')
-
+def main(audio_path):
+    S, sr, S_dB = audio_to_spectrogram(audio_path)
+    process_spectrogram_image('spectrogram.png')
+    modified_S = image_to_spectrogram('modified_spectrogram.png')
+    spectrogram_to_audio(modified_S, sr, 'reconstructed_audio_modified.wav')
 
 if __name__ == "__main__":
-    main()
+    audio_path = '../AnalogToDigitalConversionVoice/assets/records/test4.wav'
+    main(audio_path)

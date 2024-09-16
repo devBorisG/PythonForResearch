@@ -1,23 +1,30 @@
+# MiddleExam/functions/image_processing.py
 import cv2
-
+import numpy as np
 
 def process_spectrogram_image(input_image, output_image='modified_spectrogram.png'):
-    # Leer la imagen del espectrograma
+    # Leer la imagen
     img = cv2.imread(input_image)
 
-    # Aplicar procesamiento de imágenes (ejemplo: desenfoque gaussiano)
-    processed_img = cv2.GaussianBlur(img, (5, 5), 0)
+    # Aplicar un desenfoque gaussiano
+    blurred_img = cv2.GaussianBlur(img, (5, 5), 0)
+
+    # Aplicar un filtro de nitidez (sharpening)
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened_img = cv2.filter2D(blurred_img, -1, kernel)
+
+    # Detectar bordes usando el algoritmo de Canny
+    edges = cv2.Canny(sharpened_img, 100, 200)
+
+    # Añadir ruido gaussiano
+    row, col, ch = img.shape
+    mean = 0
+    sigma = 0.05  # Reducir la cantidad de ruido
+    gauss = np.random.normal(mean, sigma, (row, col, ch))
+    gauss = gauss.reshape(row, col, ch)
+    noisy_img = sharpened_img + gauss
 
     # Guardar la imagen procesada
-    cv2.imwrite(output_image, processed_img)
+    cv2.imwrite(output_image, noisy_img)
 
-    # Mostrar la imagen procesada
-    cv2.imshow('Processed Spectrogram', processed_img)
-    cv2.waitKey(0)  # Esperar hasta que se presione una tecla
-    cv2.destroyAllWindows()
-
-    return processed_img
-
-
-def dummy():
-    print("dummy image processing function")
+    return noisy_img
