@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
-Script mejorado para el Preprocesamiento y Análisis de Textos de Artículos de Investigación.
+Preprocesamiento y Análisis de Textos de Artículos de Investigación.
 
-Este script realiza las siguientes tareas:
+Este codigo realiza las siguientes tareas:
 1. Extrae texto de archivos PDF en una carpeta específica.
 2. Preprocesa el texto (convierte a minúsculas, elimina números y puntuación).
 3. Tokeniza el texto y elimina palabras vacías.
@@ -92,7 +91,7 @@ def preprocesar_texto(texto):
 
 def eliminar_stopwords(tokens):
     """
-    Elimina las palabras vacías de una lista de tokens.
+    Elimina las palabras vacías en español e inglés, y palabras personalizadas no deseadas.
 
     Parámetros:
     tokens (list): Lista de tokens.
@@ -100,9 +99,22 @@ def eliminar_stopwords(tokens):
     Retorna:
     list: Lista de tokens filtrados.
     """
-    stop_words = set(stopwords.words('spanish'))
+    stop_words_spanish = set(stopwords.words('spanish'))
+    stop_words_english = set(stopwords.words('english'))
+    stop_words = stop_words_spanish.union(stop_words_english)
+
+    # Lista de palabras adicionales a eliminar
+    palabras_no_deseadas = {
+        'et', 'al', 'doi', 'httpsdoiorgedutec', 'issn', 'edutec', 'revista',
+        'electrónico', 'página', 'http', 'https', 'www', 'com', 'org', 'vol',
+        'pp', 'isbn', 'número', 'fig', 'figure', 'table', 'author', 'authors',
+        'et', 'sti', 'n'
+    }
+    stop_words.update(palabras_no_deseadas)
+
     tokens_filtrados = [token for token in tokens if token not in stop_words]
     return tokens_filtrados
+
 
 def lematizar_tokens(tokens):
     """
@@ -172,6 +184,7 @@ def analizar_colocaciones(tokens, top_n=10):
     top_bigrams = bigramas_puntuados[:top_n]
     return top_bigrams
 
+
 def extraer_seccion_mejorada(texto, seccion):
     """
     Extrae una sección específica del texto entre dos delimitadores, manejando variaciones en los títulos.
@@ -184,21 +197,34 @@ def extraer_seccion_mejorada(texto, seccion):
     str: Texto de la sección extraída o None si no se encuentra.
     """
     patrones = {
-        'resumen': r'(resumen|abstract)',
-        'introducción': r'(introducción|introduction)',
-        'metodología': r'(metodología|methodology)',
-        'resultados': r'(resultados|results)',
-        'conclusiones': r'(conclusiones|conclusion)',
-        'referencias': r'(referencias|bibliografía|references)'
+        'resumen': r'(?:resumen|abstract)',
+        'introducción': r'(?:introducción|introduction)',
+        'metodología': r'(?:metodología|methodology)',
+        'resultados': r'(?:resultados|results)',
+        'conclusiones': r'(?:conclusiones|conclusion)',
+        'referencias': r'(?:referencias|bibliografía|references)'
     }
     inicio_patron = patrones.get(seccion.lower(), seccion)
-    fin_patron = '|'.join(patrones.values())
-    patron = rf"(?i){inicio_patron}(.*?)(?={fin_patron})"
-    seccion_encontrada = re.findall(patron, texto, re.DOTALL)
+
+    # Excluir el patrón de inicio del patrón de fin
+    patrones_sin_inicio = patrones.copy()
+    del patrones_sin_inicio[seccion.lower()]
+    fin_patron = '|'.join(patrones_sin_inicio.values())
+
+    # Si no hay más secciones, capturar hasta el final del texto
+    if not fin_patron:
+        fin_patron = r'\Z'
+
+    # Construir la expresión regular sin flags inline
+    patron = rf"{inicio_patron}\s*(.*?)(?={fin_patron})"
+
+    # Usar flags en re.findall()
+    seccion_encontrada = re.findall(patron, texto, flags=re.DOTALL | re.IGNORECASE)
     if seccion_encontrada:
         return seccion_encontrada[0].strip()
     else:
         return None
+
 
 def extraer_entidades(texto):
     """
