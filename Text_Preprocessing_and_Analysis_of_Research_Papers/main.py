@@ -1,7 +1,7 @@
 """
 Preprocesamiento y Análisis de Textos de Artículos de Investigación.
 
-Este codigo realiza las siguientes tareas:
+Este codigo realiza:
 1. Extrae texto de archivos PDF en una carpeta específica.
 2. Preprocesa el texto (convierte a minúsculas, elimina números y puntuación).
 3. Tokeniza el texto y elimina palabras vacías.
@@ -372,7 +372,7 @@ def main():
     descargar_recursos()
 
     # Definir la ruta a la carpeta con los PDFs
-    ruta_carpeta = './assets/'  # Reemplaza con la ruta correcta
+    ruta_carpeta = './assets/'
 
     # Extraer texto de los PDFs
     print("Extrayendo texto de los PDFs...")
