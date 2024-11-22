@@ -73,7 +73,7 @@ def visualice_hotspots(df_fire_rionegro):
     cbar.set_label("Brightness")
 
     # Títulos y etiquetas
-    ax.set_title("Hotspots en Rionegro y Mapa de Colombia", fontsize=14)
+    ax.set_title("Hotspots en Rionegro visto desde País", fontsize=14)
 
     # Mostrar el primer gráfico
     plt.show()
@@ -96,7 +96,7 @@ def visualice_hotspots(df_fire_rionegro):
     # Visualización de datos en Rionegro
     scatter = ax.scatter(
         df_fire_rionegro["longitude"], df_fire_rionegro["latitude"],
-        c=df_fire_rionegro["brightness"],
+        c=df_fire_rionegro["bright_ti4"],
         s=df_fire_rionegro["frp"] * 20,
         cmap="Reds", edgecolor="k", alpha=0.7, transform=ccrs.PlateCarree(),
         label="Hotspots"
@@ -129,7 +129,7 @@ def visualice_hotspots(df_fire_rionegro):
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
 
     # Títulos y etiquetas
-    ax.set_title("Hotspots en Rionegro con Fondo de Mapa", fontsize=17)
+    ax.set_title("Hotspots en Rionegro usando mapa", fontsize=17)
 
     # Mostrar el tercer gráfico
     plt.show()
