@@ -30,7 +30,7 @@ class ImageProcessor(BaseProcessor, ABC):
         self.images_dir = os.path.join(self.report_dir, 'images', 'image_processor')
         self.model = RandomForestClassifier(n_estimators=100, random_state=42)
         self.X_train = self.X_test = self.y_train = self.y_test = None
-        self.le = LabelEncoder()  # Codificador de etiquetas
+        self.le = LabelEncoder()
 
     def load_data(self):
         print(f"Cargando imágenes desde {self.data_dir}...")
@@ -45,7 +45,7 @@ class ImageProcessor(BaseProcessor, ABC):
                     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convertir a RGB
                     self.images.append(img)
                     # Extraer la etiqueta del nombre del archivo
-                    label = str(file.split('__')[0]).strip().lower()  # Asumiendo que el formato es 'objX__Y.png'
+                    label = str(file.split('__')[0]).strip().lower()
                     self.labels.append(label)
                     print(f"Imagen {img_path} cargada exitosamente.")
                     print(f"Etiqueta: {label}")
@@ -64,8 +64,6 @@ class ImageProcessor(BaseProcessor, ABC):
         print("Extrayendo características de las imágenes...")
         features = []
         for img in self.images:
-            # Redimensionar la imagen si es necesario
-            # img = cv2.resize(img, (128, 128))
             # Extraer características de color y textura
             color_features = self.extract_color_histogram(img)
             texture_features = self.extract_lbp_features(img)
@@ -126,7 +124,6 @@ class ImageProcessor(BaseProcessor, ABC):
         Genera resúmenes estadísticos básicos de las características de imagen.
         """
         print("Generando resúmenes estadísticos de las características de imagen...")
-        # Resumen de la cantidad de imágenes por categoría
         categories = self.le.classes_
         counts = np.bincount(self.labels)
         summary_df = pd.DataFrame({'Categoria': categories, 'Cantidad': counts})
@@ -134,7 +131,6 @@ class ImageProcessor(BaseProcessor, ABC):
         summary_df.to_csv(summary_csv_path, index=False)
         print(f"Resumen estadístico de categorías de imágenes guardado en {summary_csv_path}")
 
-        # Resumen de tamaños de imágenes
         heights = [img.shape[0] for img in self.images]
         widths = [img.shape[1] for img in self.images]
         channels = [img.shape[2] if len(img.shape) > 2 else 1 for img in self.images]
@@ -147,14 +143,13 @@ class ImageProcessor(BaseProcessor, ABC):
         sizes_df.to_csv(sizes_csv_path, index=False)
         print(f"Resumen estadístico de tamaños de imágenes guardado en {sizes_csv_path}")
 
-        # Resumen de características
         features_df = pd.DataFrame(self.features)
         features_summary = features_df.describe()
         features_summary_csv_path = os.path.join(self.report_dir, 'image_features_summary.csv')
         features_summary.to_csv(features_summary_csv_path)
         print(f"Resumen estadístico de características de imágenes guardado en {features_summary_csv_path}")
 
-        # Visualización de distribución de tamaños de imágenes
+
         plt.figure(figsize=(12, 5))
 
         plt.subplot(1, 2, 1)
@@ -170,7 +165,7 @@ class ImageProcessor(BaseProcessor, ABC):
         plt.ylabel('Frecuencia')
 
         plt.tight_layout()
-        # Guardar la figura
+
         plot_filename = "image_sizes_visualization.png"
         plot_path = os.path.join(self.images_dir, plot_filename)
         plt.savefig(plot_path)
@@ -202,7 +197,7 @@ class ImageProcessor(BaseProcessor, ABC):
             self.extract_features()
             self.train_model()
             self.evaluate_model()
-            self.statistical_summary()  # Añadido para resúmenes estadísticos
+            self.statistical_summary()
             self.visualize_data()
             print("=== Reporte generado exitosamente ===")
         else:

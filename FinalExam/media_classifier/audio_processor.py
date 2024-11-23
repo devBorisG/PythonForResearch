@@ -142,7 +142,6 @@ class AudioProcessor(BaseProcessor, ABC):
         summary.to_csv(summary_csv_path)
         print(f"Resumen estadístico guardado en {summary_csv_path}")
 
-        # Guardar distribución de pitch y ruido
         plt.figure(figsize=(12, 5))
 
         plt.subplot(1, 2, 1)
@@ -159,7 +158,6 @@ class AudioProcessor(BaseProcessor, ABC):
 
         plt.tight_layout()
 
-        # Guardar la figura
         plot_filename = "pitchandrms_visualization.png"
         plot_path = os.path.join(self.images_dir, plot_filename)
         plt.savefig(plot_path)
@@ -199,7 +197,6 @@ class AudioProcessor(BaseProcessor, ABC):
             plt.title('Espectrograma')
             plt.tight_layout()
 
-            # Guardar la figura
             plot_filename = f"{os.path.splitext(file_name)[0]}_visualization.png"
             plot_path = os.path.join(self.images_dir, plot_filename)
             plt.savefig(plot_path)
@@ -214,7 +211,7 @@ class AudioProcessor(BaseProcessor, ABC):
         if self.audios:
             self.extract_features()
             self.save_results()
-            self.statistical_summary()  # Añadido para resúmenes estadísticos
+            self.statistical_summary()
             self.visualize_data()
         else:
             print("No se encontraron audios para procesar.")

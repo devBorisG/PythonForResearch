@@ -3,6 +3,7 @@ from media_classifier.audio_processor import AudioProcessor
 from media_classifier.text_processor import TextProcessor
 from media_classifier.utils import ensure_directory
 
+
 def load_custom_stopwords(file_path):
     """
     Carga una lista de stopwords personalizadas desde un archivo de texto.

@@ -44,12 +44,12 @@ class TextProcessor(BaseProcessor, ABC):
         self.stop_words = set(stopwords.words(language))
         if custom_stopwords:
             self.stop_words.update(custom_stopwords)
-        self.nlp = spacy.load('en_core_web_sm')  # Cambia el modelo según el idioma
-        self.nlp.max_length = 2000000  # Opcional: Aumentar el límite de SpaCy
+        self.nlp = spacy.load('en_core_web_sm')
+        self.nlp.max_length = 2000000
 
     def load_data(self):
         print(f"Cargando documentos de texto desde {self.data_dir}...")
-        text_extensions = ('.txt', '.csv', '.md', '.json')  # Puedes ampliar según tus necesidades
+        text_extensions = ('.txt', '.csv', '.md', '.json')
         text_files = [f for f in os.listdir(self.data_dir) if f.lower().endswith(text_extensions)]
 
         if not text_files:
@@ -81,7 +81,7 @@ class TextProcessor(BaseProcessor, ABC):
         current_length = 0
 
         for token in tokens:
-            token_length = len(token) + 1  # +1 para el espacio
+            token_length = len(token) + 1
             if current_length + token_length > max_length:
                 if current_fragment:
                     fragments.append(current_fragment)
@@ -147,7 +147,6 @@ class TextProcessor(BaseProcessor, ABC):
         freq_df.to_csv(freq_csv_path, index=False)
         print(f"Frecuencias de palabras guardadas en {freq_csv_path}")
 
-        # Guardar palabras clave
         keywords_list = []
         for file, kws in self.keywords.items():
             for word, score in kws:
@@ -181,7 +180,6 @@ class TextProcessor(BaseProcessor, ABC):
         plt.xticks(rotation=45)
         plt.tight_layout()
 
-        # Guardar la figura
         plot_filename = f'Top_{top_n}_Palabras_Mas_Frecuentes.png'
         plot_path = os.path.join(self.images_dir, plot_filename)
         plt.savefig(plot_path)
@@ -206,7 +204,6 @@ class TextProcessor(BaseProcessor, ABC):
             plt.xticks(rotation=45)
             plt.tight_layout()
 
-            # Guardar la figura
             plot_filename = f'Top_{top_n}_Palabras_Mas_Frecuentes_en_{self.file_names[idx]}.png'
             plot_path = os.path.join(self.images_dir, plot_filename)
             plt.savefig(plot_path)
@@ -222,7 +219,6 @@ class TextProcessor(BaseProcessor, ABC):
         plt.axis('off')
         plt.title('Nube de Palabras Global')
 
-        # Guardar la figura
         plot_filename = 'wordcloud_global.png'
         plot_path = os.path.join(self.images_dir, plot_filename)
         plt.savefig(plot_path)
@@ -242,7 +238,7 @@ class TextProcessor(BaseProcessor, ABC):
             plt.imshow(wordcloud_doc, interpolation='bilinear')
             plt.axis('off')
             plt.title(f'Nube de Palabras para {self.file_names[idx]}')
-            # Guardar la figura
+
             plot_filename = f'wordcloud_{self.file_names[idx]}.png'
             plot_path = os.path.join(self.images_dir, plot_filename)
             plt.savefig(plot_path)
@@ -263,7 +259,7 @@ class TextProcessor(BaseProcessor, ABC):
             plt.ylabel('Puntuación TF-IDF')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            # Guardar la figura
+
             plot_filename = 'wordcloud_global.png'
             plot_path = os.path.join(self.images_dir, plot_filename)
             plt.savefig(plot_path)
@@ -298,14 +294,12 @@ class TextProcessor(BaseProcessor, ABC):
         global_stats_df.to_csv(global_stats_csv_path, index=False)
         print(f"Resumen estadístico global guardado en {global_stats_csv_path}")
 
-        # Visualización de distribución de palabras por documento
         plt.figure(figsize=(12, 6))
         sns.histplot(word_counts, bins=30, kde=True, color='purple')
         plt.title('Distribución de la Cantidad de Palabras por Documento')
         plt.xlabel('Cantidad de Palabras')
         plt.ylabel('Frecuencia')
 
-        # Guardar la figura
         plot_filename = 'word_count_distribution.png'
         plot_path = os.path.join(self.images_dir, plot_filename)
         plt.savefig(plot_path)
