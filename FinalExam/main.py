@@ -19,22 +19,13 @@ def main():
     report_dir = 'reports'
     ensure_directory(report_dir)
 
-    # # Image Processor
-    # print("=== Image Processor ===")
-    # image_processor = ImageProcessor(
-    #     data_dir=f'{data_dir}/images/coil-20',
-    #     report_dir=report_dir
-    # )
-    # image_processor.load_data()
-    # if image_processor.images:
-    #     image_processor.preprocess_data()
-    #     image_processor.extract_features()
-    #     image_processor.train_model()
-    #     image_processor.evaluate_model()
-    #     image_processor.visualize_data()
-    #     image_processor.generate_report()
-    # else:
-    #     print("No images found in the data directory.")
+    # Image Processor
+    print("=== Image Processor ===")
+    image_processor = ImageProcessor(
+        data_dir=f'{data_dir}/images/coil-20',
+        report_dir=report_dir
+    )
+    image_processor.generate_report()
     #
     # # Audio Processor
     # print("\n=== Audio Processor ===")
