@@ -36,6 +36,7 @@ class TextProcessor(BaseProcessor, ABC):
         ensure_directory(self.report_dir)
         self.documents = []
         self.file_names = []
+        self.images_dir = os.path.join(self.report_dir, 'images', 'text_processor')
         self.processed_documents = []
         self.word_frequencies = None
         self.tfidf_matrix = None
@@ -179,7 +180,13 @@ class TextProcessor(BaseProcessor, ABC):
         plt.ylabel('Frecuencia')
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.show()
+
+        # Guardar la figura
+        plot_filename = f'Top_{top_n}_Palabras_Mas_Frecuentes.png'
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
         # Visualizar top_n palabras por documento
         print(f"Visualizando las {top_n} palabras más frecuentes por documento...")
@@ -198,7 +205,13 @@ class TextProcessor(BaseProcessor, ABC):
             plt.ylabel('Frecuencia')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            plt.show()
+
+            # Guardar la figura
+            plot_filename = f'Top_{top_n}_Palabras_Mas_Frecuentes_en_{self.file_names[idx]}.png'
+            plot_path = os.path.join(self.images_dir, plot_filename)
+            plt.savefig(plot_path)
+            plt.close()
+            print(f"Visualización guardada en {plot_path}")
 
     def visualize_wordcloud(self):
         print("Generando nube de palabras global...")
@@ -208,7 +221,13 @@ class TextProcessor(BaseProcessor, ABC):
         plt.imshow(wordcloud, interpolation='bilinear')
         plt.axis('off')
         plt.title('Nube de Palabras Global')
-        plt.show()
+
+        # Guardar la figura
+        plot_filename = 'wordcloud_global.png'
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
         # Generar nube de palabras por documento
         print("Generando nubes de palabras por documento...")
@@ -223,7 +242,12 @@ class TextProcessor(BaseProcessor, ABC):
             plt.imshow(wordcloud_doc, interpolation='bilinear')
             plt.axis('off')
             plt.title(f'Nube de Palabras para {self.file_names[idx]}')
-            plt.show()
+            # Guardar la figura
+            plot_filename = f'wordcloud_{self.file_names[idx]}.png'
+            plot_path = os.path.join(self.images_dir, plot_filename)
+            plt.savefig(plot_path)
+            plt.close()
+            print(f"Visualización guardada en {plot_path}")
 
     def visualize_keywords(self, top_n=10):
         print("Visualizando palabras clave por documento...")
@@ -239,7 +263,12 @@ class TextProcessor(BaseProcessor, ABC):
             plt.ylabel('Puntuación TF-IDF')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            plt.show()
+            # Guardar la figura
+            plot_filename = 'wordcloud_global.png'
+            plot_path = os.path.join(self.images_dir, plot_filename)
+            plt.savefig(plot_path)
+            plt.close()
+            print(f"Visualización guardada en {plot_path}")
 
     def statistical_summary(self):
         """
@@ -275,7 +304,13 @@ class TextProcessor(BaseProcessor, ABC):
         plt.title('Distribución de la Cantidad de Palabras por Documento')
         plt.xlabel('Cantidad de Palabras')
         plt.ylabel('Frecuencia')
-        plt.show()
+
+        # Guardar la figura
+        plot_filename = 'word_count_distribution.png'
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
     def generate_report(self):
         print("Generando reporte completo...")

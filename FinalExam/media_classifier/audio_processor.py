@@ -26,6 +26,7 @@ class AudioProcessor(BaseProcessor, ABC):
         self.report_dir = report_dir
         self.noise_factor = noise_factor
         ensure_directory(self.report_dir)
+        self.images_dir = os.path.join(self.report_dir, 'images', 'audio_processor')
         self.audios = []
         self.file_names = []
         self.pitch_levels = []
@@ -157,7 +158,13 @@ class AudioProcessor(BaseProcessor, ABC):
         plt.ylabel('Frecuencia')
 
         plt.tight_layout()
-        plt.show()
+
+        # Guardar la figura
+        plot_filename = "pitchandrms_visualization.png"
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
     def visualize_data(self):
         """
@@ -191,7 +198,13 @@ class AudioProcessor(BaseProcessor, ABC):
             plt.colorbar(format='%+2.0f dB')
             plt.title('Espectrograma')
             plt.tight_layout()
-            plt.show()
+
+            # Guardar la figura
+            plot_filename = f"{os.path.splitext(file_name)[0]}_visualization.png"
+            plot_path = os.path.join(self.images_dir, plot_filename)
+            plt.savefig(plot_path)
+            plt.close()
+            print(f"Visualización guardada en {plot_path}")
 
     def generate_report(self):
         """

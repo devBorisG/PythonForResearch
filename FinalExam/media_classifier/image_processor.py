@@ -27,6 +27,7 @@ class ImageProcessor(BaseProcessor, ABC):
         self.images = []
         self.labels = []
         self.features = []
+        self.images_dir = os.path.join(self.report_dir, 'images', 'image_processor')
         self.model = RandomForestClassifier(n_estimators=100, random_state=42)
         self.X_train = self.X_test = self.y_train = self.y_test = None
         self.le = LabelEncoder()  # Codificador de etiquetas
@@ -169,7 +170,12 @@ class ImageProcessor(BaseProcessor, ABC):
         plt.ylabel('Frecuencia')
 
         plt.tight_layout()
-        plt.show()
+        # Guardar la figura
+        plot_filename = "image_sizes_visualization.png"
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
     def visualize_data(self):
         print("Visualizando imágenes de muestra...")
@@ -182,7 +188,12 @@ class ImageProcessor(BaseProcessor, ABC):
             plt.axis('off')
         plt.suptitle('Imágenes de muestra')
         plt.tight_layout()
-        plt.show()
+        # Guardar la figura
+        plot_filename = "sample_images.png"
+        plot_path = os.path.join(self.images_dir, plot_filename)
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Visualización guardada en {plot_path}")
 
     def generate_report(self):
         print("Generando reporte completo de Imágenes...")
