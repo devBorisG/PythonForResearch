@@ -241,6 +241,42 @@ class TextProcessor(BaseProcessor, ABC):
             plt.tight_layout()
             plt.show()
 
+    def statistical_summary(self):
+        """
+        Genera resúmenes estadísticos básicos del texto procesado.
+        """
+        print("Generando resúmenes estadísticos de los textos...")
+        # Número de palabras por documento
+        word_counts = [len(doc.split()) for doc in self.processed_documents]
+        word_counts_df = pd.DataFrame({'document_name': self.file_names, 'word_count': word_counts})
+        word_counts_csv_path = os.path.join(self.report_dir, 'text_word_counts_summary.csv')
+        word_counts_df.to_csv(word_counts_csv_path, index=False)
+        print(f"Resumen de conteo de palabras por documento guardado en {word_counts_csv_path}")
+
+        # Estadísticas globales
+        total_words = sum(word_counts)
+        avg_words = np.mean(word_counts)
+        max_words = np.max(word_counts)
+        min_words = np.min(word_counts)
+        global_stats = {
+            'Total de Palabras': [total_words],
+            'Promedio de Palabras por Documento': [avg_words],
+            'Máximo de Palabras en un Documento': [max_words],
+            'Mínimo de Palabras en un Documento': [min_words]
+        }
+        global_stats_df = pd.DataFrame(global_stats)
+        global_stats_csv_path = os.path.join(self.report_dir, 'text_global_stats_summary.csv')
+        global_stats_df.to_csv(global_stats_csv_path, index=False)
+        print(f"Resumen estadístico global guardado en {global_stats_csv_path}")
+
+        # Visualización de distribución de palabras por documento
+        plt.figure(figsize=(12, 6))
+        sns.histplot(word_counts, bins=30, kde=True, color='purple')
+        plt.title('Distribución de la Cantidad de Palabras por Documento')
+        plt.xlabel('Cantidad de Palabras')
+        plt.ylabel('Frecuencia')
+        plt.show()
+
     def generate_report(self):
         print("Generando reporte completo...")
         self.load_data()
@@ -249,6 +285,7 @@ class TextProcessor(BaseProcessor, ABC):
             self.extract_word_frequencies()
             self.extract_keywords()
             self.save_results()
+            self.statistical_summary()
             self.visualize_word_frequencies()
             self.visualize_wordcloud()
             self.visualize_keywords()

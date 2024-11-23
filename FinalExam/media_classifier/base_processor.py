@@ -7,6 +7,10 @@ class BaseProcessor(ABC):
         pass
 
     @abstractmethod
+    def statistical_summary(self):
+        pass
+
+    @abstractmethod
     def preprocess_data(self):
         pass
 

@@ -10,6 +10,7 @@ import librosa.display
 import pandas as pd
 from .base_processor import BaseProcessor
 from .utils import ensure_directory
+import seaborn as sns
 
 
 class AudioProcessor(BaseProcessor, ABC):
@@ -29,6 +30,7 @@ class AudioProcessor(BaseProcessor, ABC):
         self.file_names = []
         self.pitch_levels = []
         self.noise_levels = []
+        self.durations = []  # Lista para almacenar duraciones
         self.results_df = pd.DataFrame()
 
     def load_data(self):
@@ -44,12 +46,14 @@ class AudioProcessor(BaseProcessor, ABC):
             file_path = os.path.join(self.data_dir, file)
             try:
                 y, sr = librosa.load(file_path, sr=None)
+                duration = librosa.get_duration(y=y, sr=sr)
+                self.durations.append(duration)
                 # Inyectar ruido si se especifica
                 if self.noise_factor > 0:
                     y = self.add_noise(y)
                 self.audios.append((y, sr))
                 self.file_names.append(file)
-                print(f"Audio {file_path} cargado exitosamente.")
+                print(f"Audio {file_path} cargado exitosamente. Duración: {duration:.2f} segundos.")
             except Exception as e:
                 print(f"Error al cargar el audio {file_path}: {e}")
         print(f"Se cargaron {len(self.audios)} audios en total.")
@@ -114,7 +118,8 @@ class AudioProcessor(BaseProcessor, ABC):
         self.results_df = pd.DataFrame({
             'file_name': self.file_names,
             'dominant_pitch_Hz': self.pitch_levels,
-            'noise_level_RMS': self.noise_levels
+            'noise_level_RMS': self.noise_levels,
+            'duration_seconds': self.durations
         })
         print("Características extraídas y almacenadas en DataFrame.")
 
@@ -125,6 +130,34 @@ class AudioProcessor(BaseProcessor, ABC):
         csv_path = os.path.join(self.report_dir, 'audio_features.csv')
         self.results_df.to_csv(csv_path, index=False)
         print(f"Resultados guardados en {csv_path}")
+
+    def statistical_summary(self):
+        """
+        Genera resúmenes estadísticos básicos de las características de audio.
+        """
+        print("Generando resúmenes estadísticos de las características de audio...")
+        summary = self.results_df.describe()
+        summary_csv_path = os.path.join(self.report_dir, 'audio_statistical_summary.csv')
+        summary.to_csv(summary_csv_path)
+        print(f"Resumen estadístico guardado en {summary_csv_path}")
+
+        # Guardar distribución de pitch y ruido
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        sns.histplot(self.pitch_levels, bins=30, kde=True, color='skyblue')
+        plt.title('Distribución de Pitch Dominante')
+        plt.xlabel('Pitch (Hz)')
+        plt.ylabel('Frecuencia')
+
+        plt.subplot(1, 2, 2)
+        sns.histplot(self.noise_levels, bins=30, kde=True, color='salmon')
+        plt.title('Distribución de Nivel de Ruido (RMS)')
+        plt.xlabel('Nivel de Ruido (RMS)')
+        plt.ylabel('Frecuencia')
+
+        plt.tight_layout()
+        plt.show()
 
     def visualize_data(self):
         """
@@ -141,11 +174,13 @@ class AudioProcessor(BaseProcessor, ABC):
             file_name = self.file_names[i]
             pitch = self.pitch_levels[i]
             noise = self.noise_levels[i]
+            duration = self.durations[i]
 
             plt.figure(figsize=(12, 4))
             plt.subplot(1, 2, 1)
             librosa.display.waveshow(y, sr=sr)
-            plt.title(f'{file_name}\nPitch Dominante: {pitch:.2f} Hz\nNivel de Ruido (RMS): {noise:.5f}')
+            plt.title(
+                f'{file_name}\nPitch Dominante: {pitch:.2f} Hz\nNivel de Ruido (RMS): {noise:.5f}\nDuración: {duration:.2f} s')
             plt.xlabel('Tiempo (s)')
             plt.ylabel('Amplitud')
 
@@ -166,6 +201,7 @@ class AudioProcessor(BaseProcessor, ABC):
         if self.audios:
             self.extract_features()
             self.save_results()
+            self.statistical_summary()  # Añadido para resúmenes estadísticos
             self.visualize_data()
         else:
             print("No se encontraron audios para procesar.")
@@ -178,4 +214,3 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def preprocess_data(self):
         pass
-

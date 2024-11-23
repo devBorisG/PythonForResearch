@@ -51,16 +51,16 @@ def main():
     #     print("No audio files found in the data directory.")
 
     # Cargar stopwords personalizadas
-    custom_stopwords = load_custom_stopwords('./data/stop_words/stop_words')
+    # custom_stopwords = load_custom_stopwords('./data/stop_words/stop_words')
 
     # Text Processor
-    print("\n=== Text Processor ===")
-    text_processor = TextProcessor(
-        data_dir=f'{data_dir}/text/20-Newsgroups',
-        report_dir=report_dir,
-        custom_stopwords=custom_stopwords
-    )
-    text_processor.generate_report()
+    # print("\n=== Text Processor ===")
+    # text_processor = TextProcessor(
+    #     data_dir=f'{data_dir}/text/20-Newsgroups',
+    #     report_dir=report_dir,
+    #     custom_stopwords=custom_stopwords
+    # )
+    # text_processor.generate_report()
 
 
 if __name__ == '__main__':

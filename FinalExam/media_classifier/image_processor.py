@@ -1,5 +1,8 @@
+# media_classifier/image_processor.py
+
 import os
 from abc import ABC
+
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -10,6 +13,8 @@ from sklearn.preprocessing import LabelEncoder
 from skimage import feature
 from .base_processor import BaseProcessor
 from .utils import ensure_directory
+import pandas as pd
+import seaborn as sns
 
 
 class ImageProcessor(BaseProcessor, ABC):
@@ -96,7 +101,7 @@ class ImageProcessor(BaseProcessor, ABC):
         return hist
 
     def train_model(self):
-        print("Entrenando el modelo...")
+        print("Entrenando el modelo de clasificación...")
         X_train, X_test, y_train, y_test = train_test_split(
             self.features, self.labels, test_size=0.2, random_state=42, stratify=self.labels)
         self.X_train, self.X_test = X_train, X_test
@@ -115,21 +120,79 @@ class ImageProcessor(BaseProcessor, ABC):
         with open(os.path.join(self.report_dir, 'image_classification_report.txt'), 'w') as f:
             f.write(report)
 
+    def statistical_summary(self):
+        """
+        Genera resúmenes estadísticos básicos de las características de imagen.
+        """
+        print("Generando resúmenes estadísticos de las características de imagen...")
+        # Resumen de la cantidad de imágenes por categoría
+        categories = self.le.classes_
+        counts = np.bincount(self.labels)
+        summary_df = pd.DataFrame({'Categoria': categories, 'Cantidad': counts})
+        summary_csv_path = os.path.join(self.report_dir, 'image_category_summary.csv')
+        summary_df.to_csv(summary_csv_path, index=False)
+        print(f"Resumen estadístico de categorías de imágenes guardado en {summary_csv_path}")
+
+        # Resumen de tamaños de imágenes
+        heights = [img.shape[0] for img in self.images]
+        widths = [img.shape[1] for img in self.images]
+        channels = [img.shape[2] if len(img.shape) > 2 else 1 for img in self.images]
+        sizes_df = pd.DataFrame({
+            'Ancho': widths,
+            'Alto': heights,
+            'Canales': channels
+        })
+        sizes_csv_path = os.path.join(self.report_dir, 'image_sizes_summary.csv')
+        sizes_df.to_csv(sizes_csv_path, index=False)
+        print(f"Resumen estadístico de tamaños de imágenes guardado en {sizes_csv_path}")
+
+        # Resumen de características
+        features_df = pd.DataFrame(self.features)
+        features_summary = features_df.describe()
+        features_summary_csv_path = os.path.join(self.report_dir, 'image_features_summary.csv')
+        features_summary.to_csv(features_summary_csv_path)
+        print(f"Resumen estadístico de características de imágenes guardado en {features_summary_csv_path}")
+
+        # Visualización de distribución de tamaños de imágenes
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        sns.histplot(widths, bins=30, kde=True, color='blue')
+        plt.title('Distribución de Anchos de Imágenes')
+        plt.xlabel('Ancho (píxeles)')
+        plt.ylabel('Frecuencia')
+
+        plt.subplot(1, 2, 2)
+        sns.histplot(heights, bins=30, kde=True, color='green')
+        plt.title('Distribución de Altos de Imágenes')
+        plt.xlabel('Alto (píxeles)')
+        plt.ylabel('Frecuencia')
+
+        plt.tight_layout()
+        plt.show()
+
     def visualize_data(self):
         print("Visualizando imágenes de muestra...")
-        plt.figure(figsize=(10, 5))
-        for i in range(min(5, len(self.images))):
+        num_samples = min(5, len(self.images))
+        plt.figure(figsize=(15, 5))
+        for i in range(num_samples):
             plt.subplot(1, 5, i + 1)
             plt.imshow(self.images[i])
             plt.title(self.le.inverse_transform([self.labels[i]])[0])
             plt.axis('off')
         plt.suptitle('Imágenes de muestra')
+        plt.tight_layout()
         plt.show()
 
     def generate_report(self):
-        print("Generando reporte...")
-        ensure_directory(self.report_dir)
-        self.extract_features()
-        self.train_model()
-        self.evaluate_model()
-        print("=== Reporte generado exitosamente ===")
+        print("Generando reporte completo de Imágenes...")
+        self.load_data()
+        if self.images:
+            self.extract_features()
+            self.train_model()
+            self.evaluate_model()
+            self.statistical_summary()  # Añadido para resúmenes estadísticos
+            self.visualize_data()
+            print("=== Reporte generado exitosamente ===")
+        else:
+            print("No se encontraron imágenes para procesar.")
