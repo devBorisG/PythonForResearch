@@ -1,5 +1,3 @@
-# media_classifier/audio_processor.py
-
 import os
 from abc import ABC
 
@@ -14,13 +12,25 @@ import seaborn as sns
 
 
 class AudioProcessor(BaseProcessor, ABC):
+    """
+    AudioProcessor class for processing and analyzing audio files.
+
+    This class provides methods to load audio files from a directory, add noise,
+    estimate pitch and noise levels, extract features, save results, generate
+    statistical summaries, and visualize audio data.
+
+    Inherits from:
+        BaseProcessor (from .base_processor)
+    """
+
     def __init__(self, data_dir, report_dir, noise_factor=0.005):
         """
-        Inicializa el procesador de audio.
+        Initialize the AudioProcessor.
 
-        :param data_dir: Directorio que contiene los archivos de audio.
-        :param report_dir: Directorio donde se guardarán los reportes y resultados.
-        :param noise_factor: Factor para la inyección de ruido.
+        Args:
+            data_dir (str): Directory containing the audio files.
+            report_dir (str): Directory where reports and outputs will be saved.
+            noise_factor (float): Factor for injecting noise into the audio signals.
         """
         self.data_dir = data_dir
         self.report_dir = report_dir
@@ -31,10 +41,19 @@ class AudioProcessor(BaseProcessor, ABC):
         self.file_names = []
         self.pitch_levels = []
         self.noise_levels = []
-        self.durations = []  # Lista para almacenar duraciones
+        self.durations = []
         self.results_df = pd.DataFrame()
 
     def load_data(self):
+        """
+        Load audio files from the data directory.
+
+        Loads audio files with supported extensions, injects noise if specified,
+        and stores the audio data along with file names and durations.
+
+        Raises:
+            Exception: If an audio file cannot be loaded.
+        """
         print(f"Cargando audios desde {self.data_dir}...")
         audio_extensions = ('.wav', '.mp3', '.flac', '.ogg', '.m4a')
         audio_files = [f for f in os.listdir(self.data_dir) if f.lower().endswith(audio_extensions)]
@@ -61,10 +80,13 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def add_noise(self, y):
         """
-        Agrega ruido blanco gaussiano a una señal de audio.
+        Add Gaussian white noise to an audio signal.
 
-        :param y: Señal de audio original.
-        :return: Señal de audio con ruido.
+        Args:
+            y (ndarray): Original audio signal.
+
+        Returns:
+            ndarray: Audio signal with added noise.
         """
         noise = np.random.randn(len(y))
         y_noisy = y + self.noise_factor * noise
@@ -72,11 +94,14 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def estimate_pitch(self, y, sr):
         """
-        Estima el pitch dominante de una señal de audio usando librosa.
+        Estimate the dominant pitch of an audio signal using librosa.
 
-        :param y: Señal de audio.
-        :param sr: Tasa de muestreo.
-        :return: Pitch dominante en Hz.
+        Args:
+            y (ndarray): Audio signal.
+            sr (int): Sampling rate.
+
+        Returns:
+            float: Dominant pitch in Hertz (Hz). Returns 0 if no pitch is detected.
         """
         try:
             pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
@@ -97,16 +122,25 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def calculate_noise_level(self, y):
         """
-        Calcula el nivel de ruido usando RMS (Root Mean Square).
+        Calculate the noise level of an audio signal using RMS (Root Mean Square).
 
-        :param y: Señal de audio.
-        :return: Nivel de ruido (RMS).
+        Args:
+            y (ndarray): Audio signal.
+
+        Returns:
+            float: Noise level measured as RMS value.
         """
         rms = librosa.feature.rms(y=y)
         rms_mean = np.mean(rms)
         return rms_mean
 
     def extract_features(self):
+        """
+        Extract features from the loaded audio files.
+
+        For each audio file, estimates the dominant pitch and noise level,
+        and stores these values along with file names and durations in a DataFrame.
+        """
         print("Extrayendo características de los audios...")
         for idx, (y, sr) in enumerate(self.audios):
             pitch = self.estimate_pitch(y, sr)
@@ -126,7 +160,10 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def save_results(self):
         """
-        Guarda los resultados en un archivo CSV.
+        Save the extracted features to a CSV file.
+
+        Saves the DataFrame containing file names, dominant pitch, noise levels,
+        and durations to 'audio_features.csv' in the report directory.
         """
         csv_path = os.path.join(self.report_dir, 'audio_features.csv')
         self.results_df.to_csv(csv_path, index=False)
@@ -134,7 +171,10 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def statistical_summary(self):
         """
-        Genera resúmenes estadísticos básicos de las características de audio.
+        Generate basic statistical summaries of the audio features.
+
+        Creates descriptive statistics of the extracted features, saves them to a CSV file,
+        and generates visualizations of pitch and noise level distributions.
         """
         print("Generando resúmenes estadísticos de las características de audio...")
         summary = self.results_df.describe()
@@ -142,6 +182,7 @@ class AudioProcessor(BaseProcessor, ABC):
         summary.to_csv(summary_csv_path)
         print(f"Resumen estadístico guardado en {summary_csv_path}")
 
+        # Generar visualizaciones
         plt.figure(figsize=(12, 5))
 
         plt.subplot(1, 2, 1)
@@ -166,7 +207,10 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def visualize_data(self):
         """
-        Visualiza formas de onda y espectrogramas de muestras de audio.
+        Visualize waveforms and spectrograms of sample audio files.
+
+        For a subset of audio files, plots the waveform and spectrogram,
+        including annotations of pitch, noise level, and duration.
         """
         if not self.audios:
             print("No hay audios para visualizar.")
@@ -205,7 +249,10 @@ class AudioProcessor(BaseProcessor, ABC):
 
     def generate_report(self):
         """
-        Ejecuta todas las funciones necesarias para generar el reporte completo.
+        Execute all necessary functions to generate the complete audio report.
+
+        Runs the full processing pipeline: loading data, extracting features,
+        saving results, generating statistical summaries, and visualizing data.
         """
         self.load_data()
         if self.audios:
@@ -217,10 +264,25 @@ class AudioProcessor(BaseProcessor, ABC):
             print("No se encontraron audios para procesar.")
 
     def evaluate_model(self):
+        """
+        Placeholder method for evaluating a model.
+
+        Currently not implemented.
+        """
         pass
 
     def train_model(self):
+        """
+        Placeholder method for training a model.
+
+        Currently not implemented.
+        """
         pass
 
     def preprocess_data(self):
+        """
+        Placeholder method for preprocessing data.
+
+        Currently not implemented.
+        """
         pass

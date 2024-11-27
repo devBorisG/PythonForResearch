@@ -1,5 +1,3 @@
-# media_classifier/image_processor.py
-
 import os
 from abc import ABC
 
@@ -18,8 +16,39 @@ import seaborn as sns
 
 
 class ImageProcessor(BaseProcessor, ABC):
+    """
+    ImageProcessor class for processing and classifying images.
+
+    This class provides methods to load images from a directory, preprocess them,
+    extract features, train a classifier, evaluate the model, generate statistical
+    summaries, and visualize data.
+
+    Inherits from:
+        BaseProcessor (from .base_processor)
+
+    Attributes:
+        data_dir (str): Directory containing the images to process.
+        report_dir (str): Directory where reports and outputs will be saved.
+        images (list): List of loaded images.
+        labels (list): List of labels corresponding to the images.
+        features (list): Extracted features from the images.
+        images_dir (str): Directory for saving image outputs.
+        model (RandomForestClassifier): The classifier model.
+        X_train (ndarray): Training feature set.
+        X_test (ndarray): Testing feature set.
+        y_train (ndarray): Training labels.
+        y_test (ndarray): Testing labels.
+        le (LabelEncoder): Label encoder for transforming labels.
+    """
 
     def __init__(self, data_dir, report_dir):
+        """
+        Initialize the ImageProcessor.
+
+        Args:
+            data_dir (str): Directory containing the images to process.
+            report_dir (str): Directory where reports and outputs will be saved.
+        """
         self.data_dir = data_dir
         self.report_dir = report_dir
         ensure_directory(self.data_dir)
@@ -33,6 +62,15 @@ class ImageProcessor(BaseProcessor, ABC):
         self.le = LabelEncoder()
 
     def load_data(self):
+        """
+        Load images from the data directory.
+
+        Loads images from the specified data directory, converts them to RGB format,
+        and extracts labels from the filenames.
+
+        Raises:
+            Exception: If an image cannot be loaded.
+        """
         print(f"Cargando imágenes desde {self.data_dir}...")
         image_files = [f for f in os.listdir(self.data_dir)
                        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff'))]
@@ -57,10 +95,22 @@ class ImageProcessor(BaseProcessor, ABC):
         print(f"Etiquetas: {self.labels}")
 
     def preprocess_data(self):
+        """
+        Preprocess the images.
+
+        Placeholder method. No preprocessing is required in this case.
+        """
         # No es necesario preprocesar las imágenes en este caso
         pass
 
     def extract_features(self):
+        """
+        Extract features from the images.
+
+        Extracts color histograms and Local Binary Patterns (LBP) features from
+        each image and combines them into a single feature vector.
+        Also encodes the labels using LabelEncoder.
+        """
         print("Extrayendo características de las imágenes...")
         features = []
         for img in self.images:
@@ -75,6 +125,16 @@ class ImageProcessor(BaseProcessor, ABC):
         print(f"Características extraídas: {self.features.shape}")
 
     def extract_color_histogram(self, image, bins=(8, 8, 8)):
+        """
+        Compute the color histogram of an image.
+
+        Args:
+            image (ndarray): The image in RGB format.
+            bins (tuple): Number of bins for each color channel.
+
+        Returns:
+            ndarray: Flattened normalized histogram.
+        """
         # Convertir la imagen a espacio de color HSV
         hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         # Calcular el histograma
@@ -86,6 +146,17 @@ class ImageProcessor(BaseProcessor, ABC):
         return hist.flatten()
 
     def extract_lbp_features(self, image, numPoints=24, radius=8):
+        """
+        Compute the Local Binary Pattern (LBP) features of an image.
+
+        Args:
+            image (ndarray): The image in RGB format.
+            numPoints (int): Number of points to consider in LBP.
+            radius (int): Radius for LBP.
+
+        Returns:
+            ndarray: Normalized histogram of LBP features.
+        """
         # Convertir la imagen a escala de grises
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         # Calcular LBP
@@ -100,6 +171,12 @@ class ImageProcessor(BaseProcessor, ABC):
         return hist
 
     def train_model(self):
+        """
+        Train the classifier model.
+
+        Splits the data into training and testing sets, and fits the Random Forest
+        classifier using the training data.
+        """
         print("Entrenando el modelo de clasificación...")
         X_train, X_test, y_train, y_test = train_test_split(
             self.features, self.labels, test_size=0.2, random_state=42, stratify=self.labels)
@@ -109,6 +186,12 @@ class ImageProcessor(BaseProcessor, ABC):
         print("Modelo entrenado exitosamente.")
 
     def evaluate_model(self):
+        """
+        Evaluate the classifier model.
+
+        Predicts the labels of the test set and generates a classification report.
+        Saves the report to a text file in the report directory.
+        """
         print("Evaluando el modelo...")
         y_pred = self.model.predict(self.X_test)
         target_names = [str(name) for name in self.le.classes_]
@@ -121,7 +204,10 @@ class ImageProcessor(BaseProcessor, ABC):
 
     def statistical_summary(self):
         """
-        Genera resúmenes estadísticos básicos de las características de imagen.
+        Generate basic statistical summaries of the image features.
+
+        Creates summaries of image categories, image sizes, and feature statistics.
+        Saves the summaries to CSV files and generates visualizations.
         """
         print("Generando resúmenes estadísticos de las características de imagen...")
         categories = self.le.classes_
@@ -149,7 +235,7 @@ class ImageProcessor(BaseProcessor, ABC):
         features_summary.to_csv(features_summary_csv_path)
         print(f"Resumen estadístico de características de imágenes guardado en {features_summary_csv_path}")
 
-
+        # Generar visualizaciones
         plt.figure(figsize=(12, 5))
 
         plt.subplot(1, 2, 1)
@@ -173,6 +259,12 @@ class ImageProcessor(BaseProcessor, ABC):
         print(f"Visualización guardada en {plot_path}")
 
     def visualize_data(self):
+        """
+        Visualize sample images.
+
+        Displays a sample of images with their labels and saves the visualization
+        to a file.
+        """
         print("Visualizando imágenes de muestra...")
         num_samples = min(5, len(self.images))
         plt.figure(figsize=(15, 5))
@@ -191,6 +283,13 @@ class ImageProcessor(BaseProcessor, ABC):
         print(f"Visualización guardada en {plot_path}")
 
     def generate_report(self):
+        """
+        Generate a complete image processing report.
+
+        Executes the full image processing pipeline including data loading,
+        feature extraction, model training, evaluation, statistical summaries,
+        and data visualization.
+        """
         print("Generando reporte completo de Imágenes...")
         self.load_data()
         if self.images:
